@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFB Mode Virtual Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <h1>Cipher Feedback (CFB) Mode - Virtual Lab</h1>
+      <p>Cryptography Assignment: Step-by-step demonstration of 128-bit CFB encryption and decryption</p>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Inputs -->
+    <section class="section">
+      <h2>Inputs</h2>
+      
+      <div class="form-row">
+        <label for="plainTextInput">Plaintext Message</label>
+        <input type="text" id="plainTextInput" value="Cryptography Lab Assignment - CFB Mode">
+        <span class="note" id="msgLengthHint">Length: 39 bytes (3 blocks)</span>
+      </div>
+
+      <div class="form-cols">
+        <div class="form-col">
+          <div class="label-row">
+            <label for="keyInput">Key (16 bytes / hex)</label>
+            <button type="button" class="btn-link" id="randomKeyBtn">Generate Random</button>
+          </div>
+          <input type="text" id="keyInput" class="code-font" value="2b7e151628aed2a6abf7158809cf4f3c" maxlength="32">
+        </div>
+
+        <div class="form-col">
+          <div class="label-row">
+            <label for="ivInput">IV (16 bytes / hex)</label>
+            <button type="button" class="btn-link" id="randomIvBtn">Generate Random</button>
+          </div>
+          <input type="text" id="ivInput" class="code-font" value="000102030405060708090a0b0c0d0e0f" maxlength="32">
+        </div>
+      </div>
+
+      <div class="button-bar">
+        <button type="button" id="encryptBtn" class="btn btn-primary">Encrypt</button>
+        <button type="button" id="decryptBtn" class="btn btn-secondary">Decrypt</button>
+        <button type="button" id="resetBtn" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <!-- Visual Diagram and Stepper -->
+    <section class="section">
+      <div class="section-header">
+        <h2 id="processTitle">Process Visualization: Encryption</h2>
+        <div class="pager">
+          <button type="button" id="prevStepBtn" class="btn btn-sm">Previous</button>
+          <span id="stepCounter" class="step-label">Block 1 of 3</span>
+          <button type="button" id="nextStepBtn" class="btn btn-sm">Next</button>
+        </div>
+      </div>
+
+      <div class="diagram-box">
+        <svg id="cfbDiagram" viewBox="0 0 820 340" class="diagram-svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#1e293b"/>
+            </marker>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#b91c1c"/>
+            </marker>
+          </defs>
+
+          <!-- Register -->
+          <rect x="40" y="25" width="370" height="50" rx="4" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+          <text x="55" y="46" fill="#334155" font-size="12" font-weight="600">Shift Register (Input to Cipher)</text>
+          <text x="55" y="64" id="diagRegisterText" fill="#0f172a" font-size="11" font-family="monospace">000102030405060708090a0b0c0d0e0f</text>
+
+          <!-- Line from register down to AES -->
+          <line x1="225" y1="75" x2="225" y2="120" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- Key to AES -->
+          <line x1="40" y1="145" x2="115" y2="145" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <rect x="40" y="130" width="75" height="30" rx="3" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+          <text x="77" y="150" text-anchor="middle" fill="#334155" font-size="11">Key (K)</text>
+
+          <!-- AES Block -->
+          <rect x="115" y="120" width="220" height="50" rx="4" fill="#f8fafc" stroke="#1e293b" stroke-width="1.5"/>
+          <text x="225" y="143" text-anchor="middle" fill="#0f172a" font-size="13" font-weight="600">AES Encryption (E_K)</text>
+          <text x="225" y="159" text-anchor="middle" fill="#64748b" font-size="10">(Used in both Encrypt &amp; Decrypt)</text>
+
+          <!-- Line to Keystream -->
+          <line x1="225" y1="170" x2="225" y2="205" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- Keystream Box -->
+          <rect x="130" y="205" width="190" height="35" rx="3" fill="#f8fafc" stroke="#475569" stroke-width="1"/>
+          <text x="225" y="221" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Keystream Segment</text>
+          <text x="225" y="234" id="diagKeystreamText" text-anchor="middle" fill="#0f172a" font-size="10" font-family="monospace">50fe67cc996d...</text>
+
+          <!-- Line from keystream to XOR -->
+          <line x1="225" y1="240" x2="225" y2="275" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- Input Data Block (Plaintext or Ciphertext) -->
+          <rect x="40" y="270" width="130" height="42" rx="3" fill="#ffffff" stroke="#64748b" stroke-width="1"/>
+          <text x="105" y="288" id="diagInputLabel" text-anchor="middle" fill="#334155" font-size="11" font-weight="600">Plaintext (P_i)</text>
+          <text x="105" y="303" id="diagInputText" text-anchor="middle" fill="#0f172a" font-size="10" font-family="monospace">"Crypto..."</text>
+
+          <line x1="170" y1="291" x2="210" y2="291" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- XOR Circle -->
+          <circle cx="225" cy="291" r="15" fill="#ffffff" stroke="#1e293b" stroke-width="1.5"/>
+          <line x1="215" y1="291" x2="235" y2="291" stroke="#1e293b" stroke-width="1.5"/>
+          <line x1="225" y1="281" x2="225" y2="301" stroke="#1e293b" stroke-width="1.5"/>
+
+          <!-- Line to Output -->
+          <line x1="240" y1="291" x2="310" y2="291" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- Output Data Block (Ciphertext or Plaintext) -->
+          <rect x="310" y="270" width="180" height="42" rx="3" fill="#ffffff" stroke="#1e293b" stroke-width="1.5"/>
+          <text x="400" y="288" id="diagOutputLabel" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="600">Ciphertext (C_i)</text>
+          <text x="400" y="303" id="diagOutputText" text-anchor="middle" fill="#0f172a" font-size="10" font-family="monospace">189b0ba0...</text>
+
+          <!-- Feedback line -->
+          <path d="M 490 291 L 600 291 L 600 50 L 415 50" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-red)"/>
+          <rect x="530" y="145" width="140" height="42" rx="3" fill="#fff" stroke="#b91c1c" stroke-width="1"/>
+          <text x="600" y="163" text-anchor="middle" fill="#b91c1c" font-size="10" font-weight="600">Feedback Path</text>
+          <text x="600" y="177" text-anchor="middle" fill="#334155" font-size="9">C_i fed to next register</text>
+        </svg>
+      </div>
+
+      <!-- Step Calculation details -->
+      <div class="step-box">
+        <h3 id="stepBreakdownTitle">Step 1 Details:</h3>
+        <div id="stepMathText" class="code-block">
+          <!-- Populated by script -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Output and Verification -->
+    <section class="section">
+      <h2>Results</h2>
+      
+      <div class="result-row">
+        <label>Input Plaintext:</label>
+        <div class="result-text" id="resOriginalText">--</div>
+      </div>
+
+      <div class="result-row">
+        <label>Ciphertext (Hex):</label>
+        <div class="result-text code-font" id="resCiphertextHex">--</div>
+      </div>
+
+      <div class="result-row">
+        <label>Decrypted Plaintext:</label>
+        <div class="result-text" id="resDecryptedText">--</div>
+      </div>
+
+      <div class="result-row">
+        <label>Verification:</label>
+        <div class="result-status" id="verifyStatus">Decryption matched original plaintext.</div>
+      </div>
+    </section>
+
+    <!-- Block Summary Table -->
+    <section class="section">
+      <h2>Step-by-Step Block Table</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Block</th>
+              <th>Shift Register (I_i)</th>
+              <th>Keystream (S_i)</th>
+              <th>Input Block</th>
+              <th>Output Block</th>
+              <th>Next Register (I_i+1)</th>
+            </tr>
+          </thead>
+          <tbody id="traceTableBody">
+            <!-- Populated by script -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Department of Computer Science &amp; Engineering &bull; Cryptography Virtual Lab &bull; CFB Mode Assignment</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
